@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 
 from rich.table import Table
 from rich.text import Text
@@ -34,15 +34,14 @@ WEATHER_LABELS: dict[int, str] = {
 
 def format_nearby_table(stops: Sequence[Stop]) -> Table:
     table = Table(title="Nearby BVG Stops", expand=True)
-    table.add_column("Stop ID", style="cyan", no_wrap=True)
-    table.add_column("Name", style="bold")
-    table.add_column("Distance", justify="right")
-    table.add_column("Coordinates", justify="right")
+    table.add_column("name", style="bold")
+    table.add_column("type", justify="center", no_wrap=True)
+    table.add_column("distance_m", justify="right", no_wrap=True)
+    table.add_column("id", style="cyan", no_wrap=True)
 
     for stop in stops:
-        distance = f"{stop.distance_m} m" if stop.distance_m is not None else "-"
-        coordinates = f"{stop.location.latitude:.5f}, {stop.location.longitude:.5f}"
-        table.add_row(stop.id, stop.name, distance, coordinates)
+        distance = str(stop.distance_m) if stop.distance_m is not None else "-"
+        table.add_row(stop.name, stop.kind, distance, stop.id)
     return table
 
 
@@ -82,10 +81,7 @@ def format_weather_line(weather: CurrentWeather) -> Text:
         else ""
     )
     wind = f", wind {weather.wind_speed_kmh:.1f} km/h" if weather.wind_speed_kmh is not None else ""
-    if weather.is_day is None:
-        day_night = ""
-    else:
-        day_night = ", daytime" if weather.is_day else ", nighttime"
+    day_night = "" if weather.is_day is None else ", daytime" if weather.is_day else ", nighttime"
     return Text(f"Weather: {code_label}, {temp}{apparent}{wind}{day_night}")
 
 

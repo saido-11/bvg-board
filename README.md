@@ -48,7 +48,10 @@ No personal coordinates or stop IDs are hardcoded in the project. Provide them v
 
 ```bash
 # Find nearby stops for coordinates
-bvg-board nearby --latitude 52.5200 --longitude 13.4050 --results 5
+bvg-board nearby --latitude 52.5200 --longitude 13.4050 --limit 5
+
+# Save nearest stop and coordinates into config
+bvg-board nearby --latitude 52.5200 --longitude 13.4050 --save
 
 # Show one board snapshot for a stop
 bvg-board show --stop-id 900000100001

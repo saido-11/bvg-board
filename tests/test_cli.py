@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -8,6 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 import bvg_board.cli as cli_module
+import bvg_board.config as config_module
 from bvg_board.bvg_api import Departure, Location, Stop
 from bvg_board.config import AppConfig
 from bvg_board.weather import CurrentWeather
@@ -28,24 +30,47 @@ class FakeBvgClient:
     def nearby(
         self, latitude: float, longitude: float, *, results: int = 8, distance_m: int | None = None
     ) -> list[Stop]:
-        return [
+        stops = [
+            Stop(
+                id="900000100003",
+                name="Far Stop",
+                kind="stop",
+                location=Location(latitude=latitude, longitude=longitude),
+                distance_m=300 if distance_m is None else min(distance_m, 300),
+            ),
             Stop(
                 id="900000100001",
-                name=f"Test Stop ({latitude:.2f},{longitude:.2f})",
+                name="Near Station",
+                kind="station",
                 location=Location(latitude=latitude, longitude=longitude),
-                distance_m=distance_m or 100,
-            )
-        ][:results]
+                distance_m=100 if distance_m is None else min(distance_m, 100),
+            ),
+            Stop(
+                id="900000100002",
+                name="Mid Stop",
+                kind="stop",
+                location=Location(latitude=latitude, longitude=longitude),
+                distance_m=200 if distance_m is None else min(distance_m, 200),
+            ),
+        ]
+        return stops[:results]
 
     def stop(self, _stop_id: str) -> Stop:
         return Stop(
             id="900000100001",
             name="Alexanderplatz",
+            kind="station",
             location=Location(latitude=52.5219, longitude=13.4132),
             distance_m=None,
         )
 
-    def departures(self, _stop_id: str, *, duration_minutes: int = 60, results: int = 10) -> list[Departure]:
+    def departures(
+        self,
+        _stop_id: str,
+        *,
+        duration_minutes: int = 60,
+        results: int = 10,
+    ) -> list[Departure]:
         departure_time = datetime(2026, 2, 8, 20, 30, tzinfo=ZoneInfo("Europe/Berlin"))
         departures = [
             Departure(
@@ -80,7 +105,7 @@ class FakeWeatherClient:
         )
 
 
-def test_nearby_command_uses_config_coordinates(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_nearby_sorts_by_distance(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli_module, "BvgClient", FakeBvgClient)
     monkeypatch.setattr(
         cli_module,
@@ -89,7 +114,42 @@ def test_nearby_command_uses_config_coordinates(monkeypatch: pytest.MonkeyPatch)
     )
     result = runner.invoke(cli_module.app, ["nearby"])
     assert result.exit_code == 0
-    assert "Test Stop" in result.stdout
+    near_index = result.stdout.index("Near Station")
+    mid_index = result.stdout.index("Mid Stop")
+    far_index = result.stdout.index("Far Stop")
+    assert near_index < mid_index < far_index
+
+
+def test_nearby_limit_works(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli_module, "BvgClient", FakeBvgClient)
+    monkeypatch.setattr(
+        cli_module,
+        "load_config",
+        lambda: AppConfig(default_latitude=52.5, default_longitude=13.4),
+    )
+    result = runner.invoke(cli_module.app, ["nearby", "--limit", "2"])
+    assert result.exit_code == 0
+    assert "Near Station" in result.stdout
+    assert "Mid Stop" in result.stdout
+    assert "Far Stop" not in result.stdout
+
+
+def test_nearby_save_updates_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(cli_module, "BvgClient", FakeBvgClient)
+    monkeypatch.setattr(cli_module, "load_config", lambda: AppConfig())
+    tmp_config_path = tmp_path / "bvg-board" / "config.toml"
+    monkeypatch.setattr(config_module, "config_path", lambda: tmp_config_path)
+
+    result = runner.invoke(
+        cli_module.app,
+        ["nearby", "--latitude", "52.5", "--longitude", "13.4", "--save"],
+    )
+
+    assert result.exit_code == 0
+    saved = config_module.load_config(tmp_config_path)
+    assert saved.default_stop_id == "900000100001"
+    assert saved.default_latitude == 52.5
+    assert saved.default_longitude == 13.4
 
 
 def test_show_command_uses_config_stop(monkeypatch: pytest.MonkeyPatch) -> None:

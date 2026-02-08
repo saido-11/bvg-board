@@ -34,6 +34,5 @@ def test_current_weather_missing_current_raises(httpx_mock: HTTPXMock) -> None:
         json={},
     )
 
-    with WeatherClient(base_url="https://weather.test") as client:
-        with pytest.raises(WeatherApiError):
-            client.current_weather(52.52, 13.4)
+    with WeatherClient(base_url="https://weather.test") as client, pytest.raises(WeatherApiError):
+        client.current_weather(52.52, 13.4)

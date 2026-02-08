@@ -67,7 +67,10 @@ class WeatherClient:
             apparent_temperature_c=_as_optional_float(
                 current.get("apparent_temperature"), "current.apparent_temperature"
             ),
-            wind_speed_kmh=_as_optional_float(current.get("wind_speed_10m"), "current.wind_speed_10m"),
+            wind_speed_kmh=_as_optional_float(
+                current.get("wind_speed_10m"),
+                "current.wind_speed_10m",
+            ),
             weather_code=_as_optional_int(current.get("weather_code"), "current.weather_code"),
             is_day=_as_optional_bool(current.get("is_day"), "current.is_day"),
         )

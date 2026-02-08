@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 import socket
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -29,6 +29,7 @@ def sample_stop_payload() -> dict[str, object]:
     return {
         "id": "900000100001",
         "name": "Alexanderplatz",
+        "locationType": "station",
         "location": {"latitude": 52.5219, "longitude": 13.4132},
         "distance": 120,
     }
@@ -68,6 +69,7 @@ def sample_stop() -> Stop:
     return Stop(
         id="900000100001",
         name="Alexanderplatz",
+        kind="station",
         location=Location(latitude=52.5219, longitude=13.4132),
         distance_m=120,
     )

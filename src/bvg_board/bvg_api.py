@@ -23,6 +23,7 @@ class Location:
 class Stop:
     id: str
     name: str
+    kind: str
     location: Location
     distance_m: int | None = None
 
@@ -91,7 +92,13 @@ class BvgClient:
             raise BvgApiError(msg)
         return _parse_stop(raw)
 
-    def departures(self, stop_id: str, *, duration_minutes: int = 60, results: int = 10) -> list[Departure]:
+    def departures(
+        self,
+        stop_id: str,
+        *,
+        duration_minutes: int = 60,
+        results: int = 10,
+    ) -> list[Departure]:
         raw = self._get_json(
             f"/stops/{stop_id}/departures",
             {"duration": duration_minutes, "results": results},
@@ -122,10 +129,20 @@ def _parse_stop(data: object) -> Stop:
 
     stop_id = _as_str(data.get("id"), "stop.id")
     name = _as_str(data.get("name"), "stop.name")
+    kind = _parse_stop_kind(data.get("locationType") or data.get("type"))
     location = _parse_location(data.get("location"), "stop.location")
     distance_value = data.get("distance")
     distance_m = int(distance_value) if isinstance(distance_value, int | float) else None
-    return Stop(id=stop_id, name=name, location=location, distance_m=distance_m)
+    return Stop(id=stop_id, name=name, kind=kind, location=location, distance_m=distance_m)
+
+
+def _parse_stop_kind(value: object) -> str:
+    if not isinstance(value, str):
+        return "stop"
+    normalized = value.lower()
+    if normalized in {"station", "stop"}:
+        return normalized
+    return "stop"
 
 
 def _parse_departure(data: object) -> Departure:

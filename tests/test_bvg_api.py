@@ -21,10 +21,14 @@ def test_nearby_parses_stops(httpx_mock: HTTPXMock, sample_stop_payload: dict[st
     assert len(stops) == 1
     assert stops[0].id == "900000100001"
     assert stops[0].name == "Alexanderplatz"
+    assert stops[0].kind == "station"
     assert stops[0].distance_m == 120
 
 
-def test_departures_parses_data(httpx_mock: HTTPXMock, sample_departure_payload: dict[str, object]) -> None:
+def test_departures_parses_data(
+    httpx_mock: HTTPXMock,
+    sample_departure_payload: dict[str, object],
+) -> None:
     httpx_mock.add_response(
         method="GET",
         url=re.compile(r"^https://example\.test/stops/900000100001/departures(\?.*)?$"),
@@ -43,6 +47,5 @@ def test_departures_parses_data(httpx_mock: HTTPXMock, sample_departure_payload:
 def test_stop_http_error_raises(httpx_mock: HTTPXMock) -> None:
     httpx_mock.add_response(method="GET", url="https://example.test/stops/nope", status_code=404)
 
-    with BvgClient(base_url="https://example.test") as client:
-        with pytest.raises(BvgApiError):
-            client.stop("nope")
+    with BvgClient(base_url="https://example.test") as client, pytest.raises(BvgApiError):
+        client.stop("nope")
