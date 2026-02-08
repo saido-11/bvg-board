@@ -170,6 +170,45 @@ def test_show_command_uses_config_stop(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Weather:" in result.stdout
 
 
+def test_show_accepts_stop_alias(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli_module, "BvgClient", FakeBvgClient)
+    monkeypatch.setattr(cli_module, "WeatherClient", FakeWeatherClient)
+    monkeypatch.setattr(cli_module, "load_config", lambda: AppConfig())
+    result = runner.invoke(cli_module.app, ["show", "--stop", "900000100001"])
+    assert result.exit_code == 0
+    assert "Alexanderplatz" in result.stdout
+
+
+def test_watch_accepts_stop_alias(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_sleep(_seconds: int) -> None:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(cli_module, "BvgClient", FakeBvgClient)
+    monkeypatch.setattr(cli_module, "WeatherClient", FakeWeatherClient)
+    monkeypatch.setattr(cli_module.time, "sleep", fake_sleep)
+    monkeypatch.setattr(cli_module, "load_config", lambda: AppConfig())
+    result = runner.invoke(
+        cli_module.app,
+        ["watch", "--stop", "900000100001", "--interval", "1"],
+    )
+    assert result.exit_code == 0
+    assert "Stopped watch." in result.stdout
+
+
+def test_show_help_lists_stop_alias() -> None:
+    result = runner.invoke(cli_module.app, ["show", "--help"])
+    assert result.exit_code == 0
+    assert "--stop-id" in result.stdout
+    assert "--stop" in result.stdout
+
+
+def test_watch_help_lists_stop_alias() -> None:
+    result = runner.invoke(cli_module.app, ["watch", "--help"])
+    assert result.exit_code == 0
+    assert "--stop-id" in result.stdout
+    assert "--stop" in result.stdout
+
+
 def test_watch_command_handles_ctrl_c(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_sleep(_seconds: int) -> None:
         raise KeyboardInterrupt

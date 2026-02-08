@@ -69,13 +69,3 @@ bvg-board watch --stop-id 900000100001 --interval 15
 ruff check .
 pytest
 ```
-
-## Demo
-
-**Nearby stops (Tierheim Berlin area):**
-
-![Nearby stops](docs/nearby.png)
-
-**Live board (Tierheim Berlin/Dorfstr.):**
-
-![Live board](docs/watch.png)

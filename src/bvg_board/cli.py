@@ -82,7 +82,13 @@ def nearby(
 
 @app.command()
 def show(
-    stop_id: str | None = typer.Option(None, "--stop-id", "-s", help="BVG stop ID."),
+    stop_id: str | None = typer.Option(
+        None,
+        "--stop-id",
+        "--stop",
+        "-s",
+        help="BVG stop ID (--stop is an alias).",
+    ),
     latitude: float | None = typer.Option(
         None, "--latitude", "-a", help="Latitude override for weather lookups."
     ),
@@ -117,7 +123,13 @@ def show(
 
 @app.command()
 def watch(
-    stop_id: str | None = typer.Option(None, "--stop-id", "-s", help="BVG stop ID."),
+    stop_id: str | None = typer.Option(
+        None,
+        "--stop-id",
+        "--stop",
+        "-s",
+        help="BVG stop ID (--stop is an alias).",
+    ),
     latitude: float | None = typer.Option(
         None, "--latitude", "-a", help="Latitude override for weather lookups."
     ),
