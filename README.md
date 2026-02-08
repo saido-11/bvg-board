@@ -5,6 +5,14 @@
 - current Berlin time (`Europe/Berlin`)
 - current weather from Open-Meteo
 
+## Motivation
+
+My nearest bus stop doesn’t have a digital display. Since it’s only ~200m away, I often need a quick “should I leave now?” check — especially when BVG service is irregular and departures can be 15–20 minutes apart.
+
+This tool also helps my parents: they can see the next departures together with the current weather and time, without jumping between multiple apps.
+
+**Future idea:** turn this into a small always-on “mini departure board” with a tiny LED/e-ink display near the door.
+
 ## Features
 
 - `nearby`: find nearby BVG stops from coordinates
