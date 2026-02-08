@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+import re
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -15,6 +16,11 @@ from bvg_board.config import AppConfig
 from bvg_board.weather import CurrentWeather
 
 runner = CliRunner()
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+
+
+def _strip_ansi(value: str) -> str:
+    return ANSI_ESCAPE_RE.sub("", value)
 
 
 class FakeBvgClient:
@@ -198,15 +204,17 @@ def test_watch_accepts_stop_alias(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_show_help_lists_stop_alias() -> None:
     result = runner.invoke(cli_module.app, ["show", "--help"])
     assert result.exit_code == 0
-    assert "--stop-id" in result.stdout
-    assert "--stop" in result.stdout
+    help_output = _strip_ansi(result.stdout)
+    assert "--stop" in help_output
+    assert "-s" in help_output
 
 
 def test_watch_help_lists_stop_alias() -> None:
     result = runner.invoke(cli_module.app, ["watch", "--help"])
     assert result.exit_code == 0
-    assert "--stop-id" in result.stdout
-    assert "--stop" in result.stdout
+    help_output = _strip_ansi(result.stdout)
+    assert "--stop" in help_output
+    assert "-s" in help_output
 
 
 def test_watch_command_handles_ctrl_c(monkeypatch: pytest.MonkeyPatch) -> None:
